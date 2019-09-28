@@ -1,36 +1,18 @@
 import sys
 
-from PySide2.QtWidgets import QApplication, QGridLayout, QDialog
-from hwilib import commands
+from PySide2.QtWidgets import QApplication
 
 from hwi_qt.except_hook import except_hook
 from hwi_qt.logging import log
-from hwi_qt.selectable_text import SelectableText
-from hwi_qt.sync_button import SyncButton
+from hwi_qt.main_dialog import MainDialog
 
 if __name__ == '__main__':
-    devices = commands.enumerate()
-    print(devices)
-
     sys.excepthook = except_hook
 
     log.info('Starting hwi-qt')
     app = QApplication(sys.argv)
 
-    dialog = QDialog()
-    dialog.layout = QGridLayout()
-
-    for device in devices:
-        name = device['type'] + '-' + device['fingerprint']
-        text = SelectableText(name)
-        dialog.layout.addWidget(text, 0, 0)
-
-        button = SyncButton('Sync', 'Syncing...', device['fingerprint'],
-                            device['type'], device['path'])
-        dialog.layout.addLayout(button, 0, 1)
-
-    dialog.setLayout(dialog.layout)
-
+    dialog = MainDialog()
     dialog.show()
 
     sys.exit(app.exec_())
