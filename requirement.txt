@@ -3,3 +3,4 @@ hwi
 pyside2
 shiboken2
 structlog
+python-bitcoinlib

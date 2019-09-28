@@ -1,8 +1,7 @@
 import sys
 
-from PySide2.QtWidgets import QApplication, QMessageBox, QGridLayout, QDialog
-from hwilib import commands, serializations
-from hwilib.devices import trezor, ledger, coldcard
+from PySide2.QtWidgets import QApplication, QGridLayout, QDialog
+from hwilib import commands
 
 from hwi_qt.except_hook import except_hook
 from hwi_qt.logging import log
@@ -26,7 +25,8 @@ if __name__ == '__main__':
         text = SelectableText(name)
         dialog.layout.addWidget(text, 0, 0)
 
-        button = SyncButton('Sync', 'Syncing...')
+        button = SyncButton('Sync', 'Syncing...', device['fingerprint'],
+                            device['type'], device['path'])
         dialog.layout.addLayout(button, 0, 1)
 
     dialog.setLayout(dialog.layout)
