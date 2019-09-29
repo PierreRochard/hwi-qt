@@ -54,7 +54,7 @@ class DerivationPathsTable(QTableWidget):
             client.is_testnet = True
         self.bitcoin_wallets.create_wallet(network=network, name=selected_derivation_path.wallet_name)
         keypool = commands.getkeypool(client, selected_derivation_path.path, 0, 1000, wpkh=True,
-                                      internal=selected_derivation_path.is_change, keypool=True)
+                                      internal=bool(selected_derivation_path.is_change), keypool=True)
         log.info('keypool', keypool=json.dumps(keypool))
         r = self.bitcoin_wallets.importmulti(network, self.selected_derivation_path.wallet_name, keypool)
         log.info(json.dumps(r))
