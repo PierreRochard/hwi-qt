@@ -1,3 +1,6 @@
+from typing import List
+
+from hwi_qt.devices.derivation_paths.derivation_path import DerivationPath
 from hwi_qt.logging import log
 
 
@@ -14,3 +17,12 @@ class Device(object):
 
         if device_data:
             log.warning('Not all device data was used', unused_device_data=device_data)
+
+    def get_derivation_paths(self) -> List[DerivationPath]:
+        paths = []
+        for purpose in [44, 49, 84]:
+            for coin_type in [0, 1]:
+                for account in [0]:
+                    for is_change in [0, 1]:
+                        paths.append(DerivationPath(self.fingerprint, purpose, coin_type, account, is_change))
+        return paths

@@ -1,9 +1,9 @@
 from PySide2.QtWidgets import QDialog, QGridLayout
 
-from hwi_qt.devices_table import DevicesTable
+from hwi_qt.devices.devices_table import DevicesTable
 
 
-class MainDialog(QDialog):
+class DevicesDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.layout = QGridLayout()

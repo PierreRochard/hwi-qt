@@ -1,16 +1,19 @@
+from typing import Dict
+
 from PySide2 import QtWidgets
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QCursor
 from PySide2.QtWidgets import QTableWidget, QTableWidgetItem, QAction, QMenu
 from hwilib import commands
 
-from hwi_qt.device import Device
+from hwi_qt.devices.derivation_paths.derivation_paths_dialog import DerivationPathsDialog
+from hwi_qt.devices.device import Device
 
 
 class DevicesTable(QTableWidget):
     def __init__(self):
-        self.devices = {}
-        self.selected_row = None
+        self.devices: Dict[str, Device] = {}
+        self.selected_device: Device
 
         super().__init__(0, 8)
         self.setHorizontalHeaderLabels(
@@ -33,6 +36,14 @@ class DevicesTable(QTableWidget):
         refresh_action = QAction('Refresh', self)
         refresh_action.triggered.connect(lambda event: self.refresh(event))
         self.menu.addAction(refresh_action)
+
+        see_derivation_paths_action = QAction('See derivation paths', self)
+        see_derivation_paths_action.triggered.connect(lambda: self.show_derivation_paths(self.selected_device))
+        self.menu.addAction(see_derivation_paths_action)
+
+    def show_derivation_paths(self, device: Device):
+        dialog = DerivationPathsDialog(self.parentWidget(), device)
+        dialog.show()
 
     def add_device(self, device: Device):
         row_index = self.rowCount()
@@ -75,6 +86,7 @@ class DevicesTable(QTableWidget):
                 self.update_device(device)
 
     def contextMenuEvent(self, event):
-        # add other required actions
-        self.selected_row = self.rowAt(event.y())
+        selected_row = self.rowAt(event.y())
+        path = self.item(selected_row, 5).text()
+        self.selected_device = self.devices[path]
         self.menu.popup(QCursor.pos())

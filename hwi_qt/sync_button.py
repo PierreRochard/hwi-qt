@@ -60,7 +60,9 @@ class SyncButton(QVBoxLayout):
 
         external_keypool = commands.getkeypool(self.client,
                                                f'm/{purpose}h/{coin_type}h/{account}h/0/*',
-                                               0, 1000, wpkh=True, internal=False,
+                                               0, 1000,
+                                               wpkh=True,
+                                               internal=False,
                                                keypool=True)
         log.info('external_keypool', external_keypool=json.dumps(external_keypool))
         response_external = client.call('importmulti', external_keypool)
