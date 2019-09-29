@@ -7,7 +7,7 @@ from hwi_qt.logging import log
 from hwi_qt.main_dialog import MainDialog
 
 if __name__ == '__main__':
-    sys.excepthook = except_hook
+    # sys.excepthook = except_hook
 
     log.info('Starting hwi-qt')
     app = QApplication(sys.argv)
