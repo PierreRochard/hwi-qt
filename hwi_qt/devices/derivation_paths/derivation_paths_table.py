@@ -1,13 +1,16 @@
+import json
 from typing import Dict, Optional, List
 
 from PySide2 import QtWidgets
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QCursor
 from PySide2.QtWidgets import QTableWidget, QTableWidgetItem, QAction, QMenu
+from hwilib import commands
 
 from hwi_qt.bitcoin_wallets import BitcoinWallets
 from hwi_qt.devices.derivation_paths.derivation_path import DerivationPath
 from hwi_qt.devices.device import Device
+from hwi_qt.logging import log
 
 
 class DerivationPathsTable(QTableWidget):
@@ -44,7 +47,18 @@ class DerivationPathsTable(QTableWidget):
         self.menu.addAction(sync_with_bitcoin_action)
 
     def sync_with_bitcoin(self, selected_derivation_path: DerivationPath):
-        pass
+        client = commands.get_client(self.device.type, self.device.path)
+        network = 'mainnet'
+        if selected_derivation_path.coin_type:
+            network = 'testnet'
+            client.is_testnet = True
+        self.bitcoin_wallets.create_wallet(network=network, name=selected_derivation_path.wallet_name)
+        keypool = commands.getkeypool(client, selected_derivation_path.path, 0, 1000, wpkh=True,
+                                      internal=selected_derivation_path.is_change, keypool=True)
+        log.info('keypool', keypool=json.dumps(keypool))
+        r = self.bitcoin_wallets.importmulti(network, self.selected_derivation_path.wallet_name, keypool)
+        log.info(json.dumps(r))
+        self.refresh()
 
     def add_derivation_path(self, derivation_path: DerivationPath):
         row_index = self.rowCount()
@@ -53,7 +67,7 @@ class DerivationPathsTable(QTableWidget):
 
     def update_derivation_path(self, derivation_path: DerivationPath):
         for row_index in range(self.rowCount()):
-            row_path = self.item(row_index, 7).text()
+            row_path = self.item(row_index, 6).text()
             if row_path == derivation_path.path:
                 self.populate_row(row_index, derivation_path)
 

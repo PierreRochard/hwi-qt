@@ -3,6 +3,8 @@ from typing import List
 from bitcoin.rpc import Proxy
 from bitcoin import SelectParams
 
+from hwi_qt.logging import log
+
 
 class BitcoinWallets(object):
     def __init__(self):
@@ -16,3 +18,21 @@ class BitcoinWallets(object):
             client = Proxy()
             wallet_names.extend(client.call('listwallets'))
         return wallet_names
+
+    def create_wallet(self, network: str, name: str):
+        params = SelectParams(network)
+        client = Proxy()
+        try:
+            client.call('loadwallet', name)
+        except:
+            pass
+        if name not in client.call('listwallets'):
+            r = client.call('createwallet', name, True)
+            return r
+
+    def importmulti(self, network: str, wallet_name: str, keypool):
+        params = SelectParams(network)
+        client = Proxy(wallet=wallet_name)
+        log.info('importmulti', keypool=keypool)
+        r = client.call('importmulti', keypool)
+        return r

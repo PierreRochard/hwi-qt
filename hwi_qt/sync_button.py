@@ -32,15 +32,7 @@ class SyncButton(QVBoxLayout):
         self.addWidget(self.button)
         self.timer = QTimer(self.parentWidget())
 
-    def create_core_wallet(self):
-        client = Proxy()
-        name = self.device_type + '-' + self.device_fingerprint
-        try:
-            client.call('loadwallet', name)
-        except:
-            pass
-        if name not in client.call('listwallets'):
-            client.call('createwallet', name, True)
+
 
     def action(self):
         # Action here
