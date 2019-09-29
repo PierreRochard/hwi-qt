@@ -1,9 +1,8 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from PySide2 import QtWidgets
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QCursor
-from PySide2.QtWidgets import QTableWidget, QTableWidgetItem, QAction, QMenu
+from PySide2.QtCore import Qt, QTimer
+from PySide2.QtWidgets import QTableWidget, QTableWidgetItem
 from hwilib import commands
 
 from hwi_qt.devices.derivation_paths.derivation_paths_dialog import DerivationPathsDialog
@@ -13,7 +12,7 @@ from hwi_qt.devices.device import Device
 class DevicesTable(QTableWidget):
     def __init__(self):
         self.devices: Dict[str, Device] = {}
-        self.selected_device: Device
+        self.selected_device: Optional[Device] = None
 
         super().__init__(0, 8)
         self.setHorizontalHeaderLabels(
@@ -28,18 +27,19 @@ class DevicesTable(QTableWidget):
                 'Code'
             ]
         )
+
+        self.itemDoubleClicked.connect(self.handle_double_click)
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.refresh)
         self.refresh()
-        self.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-        self.resizeColumnsToContents()
+        self.timer.start(10000)
 
-        self.menu = QMenu(self)
-        refresh_action = QAction('Refresh', self)
-        refresh_action.triggered.connect(lambda event: self.refresh(event))
-        self.menu.addAction(refresh_action)
-
-        see_derivation_paths_action = QAction('See derivation paths', self)
-        see_derivation_paths_action.triggered.connect(lambda: self.show_derivation_paths(self.selected_device))
-        self.menu.addAction(see_derivation_paths_action)
+    def handle_double_click(self, item):
+        selected_row = item.row()
+        path = self.item(selected_row, 5).text()
+        self.selected_device = self.devices[path]
+        self.show_derivation_paths(self.selected_device)
 
     def show_derivation_paths(self, device: Device):
         dialog = DerivationPathsDialog(self.parentWidget(), device)
@@ -75,7 +75,7 @@ class DevicesTable(QTableWidget):
     def remove_device(self):
         pass
 
-    def refresh(self, event=None):
+    def refresh(self):
         devices_data = commands.enumerate()
         for device_data in devices_data:
             device = Device(device_data=device_data)
@@ -84,9 +84,5 @@ class DevicesTable(QTableWidget):
                 self.devices[device.path] = device
             else:
                 self.update_device(device)
-
-    def contextMenuEvent(self, event):
-        selected_row = self.rowAt(event.y())
-        path = self.item(selected_row, 5).text()
-        self.selected_device = self.devices[path]
-        self.menu.popup(QCursor.pos())
+        self.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.resizeColumnsToContents()
