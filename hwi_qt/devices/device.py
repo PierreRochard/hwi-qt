@@ -1,5 +1,8 @@
 from typing import List
 
+from hwilib import commands
+from hwilib.hwwclient import HardwareWalletClient
+
 from hwi_qt.devices.derivation_paths.derivation_path import DerivationPath
 from hwi_qt.logging import log
 
@@ -14,9 +17,9 @@ class Device(object):
         self.path = device_data.pop('path')
         self.error = device_data.pop('error', None)
         self.code = device_data.pop('code', None)
-
         if device_data:
             log.warning('Not all device data was used', unused_device_data=device_data)
+        self.client: HardwareWalletClient = commands.get_client(self.type, self.path)
 
     def get_derivation_paths(self) -> List[DerivationPath]:
         paths = []
@@ -24,5 +27,5 @@ class Device(object):
             for coin_type in [0, 1]:
                 for account in [0]:
                     for is_change in [0, 1]:
-                        paths.append(DerivationPath(self.fingerprint, purpose, coin_type, account, is_change))
+                        paths.append(DerivationPath(self.fingerprint, self.client, purpose, coin_type, account, is_change))
         return paths

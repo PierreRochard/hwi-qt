@@ -1,3 +1,4 @@
+import json
 from typing import List
 
 from bitcoin.rpc import Proxy
@@ -32,7 +33,9 @@ class BitcoinWallets(object):
 
     def importmulti(self, network: str, wallet_name: str, keypool):
         params = SelectParams(network)
+        self.create_wallet(network, wallet_name)
         client = Proxy(wallet=wallet_name)
         log.info('importmulti', keypool=keypool)
         r = client.call('importmulti', keypool)
+        log.info(json.dumps(r))
         return r

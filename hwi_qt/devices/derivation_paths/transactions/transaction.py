@@ -7,7 +7,7 @@ from hwi_qt.bitcoin_wallets import BitcoinWallets
 from hwi_qt.logging import log
 
 
-class DerivationPath(object):
+class Transaction(object):
     def __init__(self, fingerprint: str, client: HardwareWalletClient, purpose: int, coin_type: int, account: int,
                  is_change: int):
         self.fingerprint = fingerprint
@@ -40,4 +40,3 @@ class DerivationPath(object):
     def add_watch_only_to_bitcoin_wallet(self):
         r = self.bitcoin_wallets.importmulti(self.network, self.wallet_name, self.get_keypool_from_device())
         return r
-

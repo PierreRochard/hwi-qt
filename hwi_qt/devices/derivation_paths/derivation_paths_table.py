@@ -19,9 +19,8 @@ class DerivationPathsTable(QTableWidget):
         self.derivation_paths: Dict[str, DerivationPath] = {}
         self.selected_derivation_path: Optional[DerivationPath] = None
         self.bitcoin_wallets: BitcoinWallets = BitcoinWallets()
-        self.wallet_names: List[str] = []
 
-        super().__init__(0, 7)
+        super().__init__(0, 6)
         self.setHorizontalHeaderLabels(
             [
                 'Fingerprint',
@@ -29,13 +28,10 @@ class DerivationPathsTable(QTableWidget):
                 'Coin Type',
                 'Account',
                 'Is Change',
-                'Has Wallet',
                 'Path'
             ]
         )
         self.refresh()
-        self.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-        self.resizeColumnsToContents()
 
         self.menu = QMenu(self)
         refresh_action = QAction('Refresh', self)
@@ -43,21 +39,22 @@ class DerivationPathsTable(QTableWidget):
         self.menu.addAction(refresh_action)
 
         sync_with_bitcoin_action = QAction('Sync with Bitcoin', self)
-        sync_with_bitcoin_action.triggered.connect(lambda: self.sync_with_bitcoin(self.selected_derivation_path))
+        sync_with_bitcoin_action.triggered.connect(lambda: self.add_watch_only_to_bitcoin_wallet(
+            self.selected_derivation_path))
         self.menu.addAction(sync_with_bitcoin_action)
 
-    def sync_with_bitcoin(self, selected_derivation_path: DerivationPath):
-        client = commands.get_client(self.device.type, self.device.path)
-        network = 'mainnet'
-        if selected_derivation_path.coin_type:
-            network = 'testnet'
-            client.is_testnet = True
-        self.bitcoin_wallets.create_wallet(network=network, name=selected_derivation_path.wallet_name)
-        keypool = commands.getkeypool(client, selected_derivation_path.path, 0, 1000, wpkh=True,
-                                      internal=bool(selected_derivation_path.is_change), keypool=True)
-        log.info('keypool', keypool=json.dumps(keypool))
-        r = self.bitcoin_wallets.importmulti(network, self.selected_derivation_path.wallet_name, keypool)
-        log.info(json.dumps(r))
+    def handle_double_click(self, item):
+        selected_row = item.row()
+        path = self.item(selected_row, 5).text()
+        self.selected_derivation_path = self.derivation_paths[path]
+        self.show_transactions(self.selected_derivation_path)
+
+    def show_transactions(self, derivation_path: DerivationPath):
+        dialog = TransactionsDialog(self.parentWidget(), derivation_path)
+        dialog.show()
+
+    def add_watch_only_to_bitcoin_wallet(self, selected_derivation_path: DerivationPath):
+        selected_derivation_path.add_watch_only_to_bitcoin_wallet()
         self.refresh()
 
     def add_derivation_path(self, derivation_path: DerivationPath):
@@ -67,7 +64,7 @@ class DerivationPathsTable(QTableWidget):
 
     def update_derivation_path(self, derivation_path: DerivationPath):
         for row_index in range(self.rowCount()):
-            row_path = self.item(row_index, 6).text()
+            row_path = self.item(row_index, 5).text()
             if row_path == derivation_path.path:
                 self.populate_row(row_index, derivation_path)
 
@@ -78,7 +75,6 @@ class DerivationPathsTable(QTableWidget):
             derivation_path.coin_type,
             derivation_path.account,
             derivation_path.is_change,
-            derivation_path.wallet_name in self.wallet_names,
             derivation_path.path
         ]):
             item = QTableWidgetItem()
@@ -90,16 +86,11 @@ class DerivationPathsTable(QTableWidget):
         pass
 
     def refresh(self, event=None):
-        self.wallet_names = self.bitcoin_wallets.get_wallet_names()
         for derivation_path in self.device.get_derivation_paths():
             if derivation_path.path not in self.derivation_paths.keys():
                 self.add_derivation_path(derivation_path)
                 self.derivation_paths[derivation_path.path] = derivation_path
             else:
                 self.update_derivation_path(derivation_path)
-
-    def contextMenuEvent(self, event):
-        selected_row = self.rowAt(event.y())
-        path = self.item(selected_row, 6).text()
-        self.selected_derivation_path = self.derivation_paths[path]
-        self.menu.popup(QCursor.pos())
+        self.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.resizeColumnsToContents()
